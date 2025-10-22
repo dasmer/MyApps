@@ -1,13 +1,14 @@
 import SwiftUI
 
 struct ContentView: View {
-    // Hard-code these
-    private let artistId = 686614183
     private let countryCode = "us"
 
+    @State private var artistId: Int?
+    @State private var artistName: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var apps: [AppItem] = []
+    @State private var showingArtistSearch = false
 
     var body: some View {
         NavigationStack {
@@ -56,15 +57,40 @@ struct ContentView: View {
                     }
                 }
             }
-            .navigationTitle("My Apps")
+            .navigationTitle(artistName ?? "My Apps")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showingArtistSearch = true
+                    } label: {
+                        Label("Change Developer", systemImage: "person.crop.circle.badge.magnifyingglass")
+                    }
+                }
+            }
+            .sheet(isPresented: $showingArtistSearch) {
+                ArtistSearchView { artist in
+                    selectArtist(artist)
+                }
+            }
             .task {
-                if apps.isEmpty { await fetchApps() }
+                loadSavedArtist()
+                if artistId != nil && apps.isEmpty {
+                    await fetchApps()
+                }
+            }
+            .fullScreenCover(isPresented: .constant(artistId == nil && !showingArtistSearch)) {
+                ArtistSearchView(showCancelButton: false) { artist in
+                    selectArtist(artist)
+                }
+                .interactiveDismissDisabled()
             }
         }
     }
 
     private func fetchApps() async {
+        guard let artistId else { return }
+
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -88,6 +114,21 @@ struct ContentView: View {
             }
         } catch {
             errorMessage = "Failed to fetch apps. \(error.localizedDescription)"
+        }
+    }
+
+    private func loadSavedArtist() {
+        artistId = AppSettings.selectedArtistId
+        artistName = AppSettings.selectedArtistName
+    }
+
+    private func selectArtist(_ artist: Artist) {
+        AppSettings.saveArtist(artist)
+        artistId = artist.artistId
+        artistName = artist.artistName
+        apps = []
+        Task {
+            await fetchApps()
         }
     }
 }
