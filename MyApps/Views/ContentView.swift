@@ -77,7 +77,11 @@ struct ContentView: View {
             }
             let decoded = try JSONDecoder().decode(LookupResponse.self, from: data)
             let onlyApps = decoded.results.filter { ($0.kind ?? "") == "software" || ($0.wrapperType ?? "") == "software" }
-            let sorted = onlyApps.sorted { ($0.trackName ?? "") < ($1.trackName ?? "") }
+            let sorted = onlyApps.sorted {
+                let count1 = $0.userRatingCount ?? 0
+                let count2 = $1.userRatingCount ?? 0
+                return count1 > count2
+            }
             apps = sorted
             if apps.isEmpty {
                 errorMessage = "No apps found for this artist in \(countryCode.uppercased())."
