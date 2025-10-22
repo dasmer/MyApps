@@ -111,7 +111,7 @@ struct AppDetailView: View {
                     if let count = app.userRatingCount, count > 0 {
                         Text("•")
                             .foregroundStyle(.quaternary)
-                        Text("\(formatCount(count))")
+                        Text("\(count)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -132,16 +132,6 @@ struct AppDetailView: View {
             }
 
             Spacer()
-        }
-    }
-
-    private func formatCount(_ count: Int) -> String {
-        if count >= 1000000 {
-            return String(format: "%.1fM", Double(count) / 1000000.0)
-        } else if count >= 1000 {
-            return String(format: "%.1fK", Double(count) / 1000.0)
-        } else {
-            return "\(count)"
         }
     }
 

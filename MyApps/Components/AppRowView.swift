@@ -58,7 +58,7 @@ struct AppRowView: View {
                         .fixedSize()
 
                         if let count = app.userRatingCount, count > 0 {
-                            Text("(\(formatCount(count)))")
+                            Text("(\(count))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .fixedSize()
@@ -86,18 +86,4 @@ struct AppRowView: View {
         .padding(.vertical, 6)
     }
 
-    private func formatCount(_ count: Int) -> String {
-        if count >= 1000000 {
-            let formatted = Double(count) / 1000000.0
-            return String(format: "%.1fM", formatted).replacingOccurrences(of: ".0M", with: "M")
-        } else if count >= 10000 {
-            let formatted = Double(count) / 1000.0
-            return String(format: "%.0fK", formatted)
-        } else if count >= 1000 {
-            let formatted = Double(count) / 1000.0
-            return String(format: "%.1fK", formatted).replacingOccurrences(of: ".0K", with: "K")
-        } else {
-            return "\(count)"
-        }
-    }
 }
