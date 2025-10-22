@@ -14,16 +14,43 @@ struct AppDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 header
+
+                if let urlStr = app.trackViewUrl, let url = URL(string: urlStr) {
+                    Button {
+                        openURL(url)
+                    } label: {
+                        Label("View in App Store", systemImage: "arrow.up.forward.app.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.accentColor.gradient)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                }
+
                 whatsNewSection
                 descriptionSection
                 screenshotsSection
                 detailsGrid
-                actionsRow
+
+                Button {
+                    showRawJSON.toggle()
+                } label: {
+                    Label("View Raw JSON", systemImage: "curlybraces")
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color(.tertiarySystemGroupedBackground))
+                        .foregroundStyle(.secondary)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                }
             }
             .padding()
         }
+        .background(Color(.systemGroupedBackground))
         .navigationTitle(app.trackName ?? "Details")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable {
@@ -32,52 +59,99 @@ struct AppDetailView: View {
         .sheet(isPresented: $showRawJSON) {
             RawJSONView(encodable: app)
         }
-        .task {
-            // Optional: refresh when opening, but not required
-        }
     }
 
     private var header: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: 16) {
             AsyncImage(url: URL(string: app.artworkUrl100 ?? app.artworkUrl60 ?? app.artworkUrl512 ?? "")) { phase in
                 switch phase {
-                case .empty: ProgressView().frame(width: 80, height: 80)
-                case .success(let image): image.resizable().clipShape(RoundedRectangle(cornerRadius: 16)).frame(width: 80, height: 80)
-                case .failure: Color.gray.opacity(0.2).clipShape(RoundedRectangle(cornerRadius: 16)).frame(width: 80, height: 80)
-                @unknown default: EmptyView().frame(width: 80, height: 80)
+                case .empty:
+                    ProgressView()
+                        .frame(width: 100, height: 100)
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 100, height: 100)
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                case .failure:
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 100, height: 100)
+                @unknown default:
+                    EmptyView()
+                        .frame(width: 100, height: 100)
                 }
             }
-            VStack(alignment: .leading, spacing: 6) {
+
+            VStack(alignment: .leading, spacing: 8) {
                 Text(app.trackName ?? "Unknown App")
-                    .font(.title3).fontWeight(.semibold)
+                    .font(.title2)
+                    .fontWeight(.bold)
                     .lineLimit(2)
+
                 if let seller = app.sellerName ?? app.artistName {
-                    Text(seller).foregroundStyle(.secondary).lineLimit(1)
+                    Text(seller)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                HStack(spacing: 8) {
+
+                HStack(spacing: 6) {
                     if let rating = app.averageUserRating {
-                        RatingView(rating: rating)
-                        Text(String(format: "%.2f", rating))
+                        HStack(spacing: 4) {
+                            RatingView(rating: rating, size: .medium)
+                            Text(String(format: "%.1f", rating))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                        }
+                    }
+
+                    if let count = app.userRatingCount, count > 0 {
+                        Text("•")
+                            .foregroundStyle(.quaternary)
+                        Text("\(formatCount(count))")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    if let count = app.userRatingCount {
-                        Text("(\(count))").foregroundStyle(.secondary)
-                    }
-                    if let price = app.formattedPrice {
-                        Text(price).foregroundStyle(.secondary)
-                    }
+                }
+
+                if let price = app.formattedPrice {
+                    Text(price)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(price == "Free" ? .green : .blue)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(price == "Free" ? Color.green.opacity(0.15) : Color.blue.opacity(0.15))
+                        )
                 }
             }
+
             Spacer()
+        }
+    }
+
+    private func formatCount(_ count: Int) -> String {
+        if count >= 1000000 {
+            return String(format: "%.1fM", Double(count) / 1000000.0)
+        } else if count >= 1000 {
+            return String(format: "%.1fK", Double(count) / 1000.0)
+        } else {
+            return "\(count)"
         }
     }
 
     private var whatsNewSection: some View {
         Group {
             if let notes = app.releaseNotes, !notes.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("What's New").font(.headline)
+                SectionCard(title: "What's New") {
                     Text(notes)
+                        .font(.body)
+                        .foregroundStyle(.primary)
                 }
             }
         }
@@ -86,9 +160,11 @@ struct AppDetailView: View {
     private var descriptionSection: some View {
         Group {
             if let desc = app.description, !desc.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Description").font(.headline)
-                    Text(desc).fixedSize(horizontal: false, vertical: true)
+                SectionCard(title: "About") {
+                    Text(desc)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
@@ -97,26 +173,39 @@ struct AppDetailView: View {
     private var screenshotsSection: some View {
         Group {
             if let screenshots = app.screenshotUrls, !screenshots.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Screenshots").font(.headline)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Screenshots")
+                        .font(.title3)
+                        .fontWeight(.bold)
+
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: 16) {
                             ForEach(screenshots, id: \.self) { urlStr in
                                 AsyncImage(url: URL(string: urlStr)) { phase in
                                     switch phase {
-                                    case .empty: ProgressView().frame(width: 220, height: 470)
-                                    case .success(let image): image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(height: 470)
-                                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                                    case .failure: Color.gray.opacity(0.2).frame(width: 220, height: 470).clipShape(RoundedRectangle(cornerRadius: 16))
-                                    @unknown default: EmptyView().frame(width: 220, height: 470)
+                                    case .empty:
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(Color(.tertiarySystemGroupedBackground))
+                                            .frame(width: 250, height: 540)
+                                            .overlay(ProgressView())
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: 540)
+                                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+                                    case .failure:
+                                        RoundedRectangle(cornerRadius: 20)
+                                            .fill(Color.gray.opacity(0.2))
+                                            .frame(width: 250, height: 540)
+                                    @unknown default:
+                                        EmptyView()
                                     }
                                 }
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 8)
                     }
                 }
             }
@@ -124,37 +213,41 @@ struct AppDetailView: View {
     }
 
     private var detailsGrid: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Details").font(.headline)
-            InfoRow(title: "Version", value: app.version)
-            InfoRow(title: "Bundle ID", value: app.bundleId)
-            InfoRow(title: "Category", value: app.primaryGenreName)
-            InfoRow(title: "Age Rating", value: app.trackContentRating ?? app.contentAdvisoryRating)
-            InfoRow(title: "Languages", value: app.languageCodesISO2A?.joined(separator: ", "))
-            InfoRow(title: "Min iOS", value: app.minimumOsVersion)
-            InfoRow(title: "File Size (bytes)", value: app.fileSizeBytes)
-            InfoRow(title: "Release Date", value: app.releaseDate)
-            InfoRow(title: "Current Version Release", value: app.currentVersionReleaseDate)
-            InfoRow(title: "Features", value: app.features?.joined(separator: ", "))
-            InfoRow(title: "Advisories", value: app.advisories?.joined(separator: ", "))
-            if let devices = app.supportedDevices {
-                InfoRow(title: "Supported Devices", value: "\(devices.count) devices")
+        SectionCard(title: "Information") {
+            VStack(spacing: 0) {
+                InfoRow(title: "Version", value: app.version)
+                InfoRow(title: "Bundle ID", value: app.bundleId)
+                InfoRow(title: "Category", value: app.primaryGenreName)
+                InfoRow(title: "Age Rating", value: app.trackContentRating ?? app.contentAdvisoryRating)
+                InfoRow(title: "Languages", value: app.languageCodesISO2A?.joined(separator: ", "))
+                InfoRow(title: "Min iOS", value: app.minimumOsVersion)
+                InfoRow(title: "File Size", value: formatBytes(app.fileSizeBytes))
+                InfoRow(title: "Release Date", value: formatDate(app.releaseDate))
+                InfoRow(title: "Updated", value: formatDate(app.currentVersionReleaseDate))
+                InfoRow(title: "Features", value: app.features?.joined(separator: ", "))
+                InfoRow(title: "Advisories", value: app.advisories?.joined(separator: ", "))
+                if let devices = app.supportedDevices {
+                    InfoRow(title: "Supported Devices", value: "\(devices.count) devices", isLast: true)
+                }
             }
         }
     }
 
-    private var actionsRow: some View {
-        HStack {
-            if let urlStr = app.trackViewUrl, let url = URL(string: urlStr) {
-                Button("View in App Store") { openURL(url) }
-                    .buttonStyle(.borderedProminent)
-            }
-            Spacer()
-            Button(showRawJSON ? "Hide Raw JSON" : "Show Raw JSON") {
-                showRawJSON.toggle()
-            }
-            .buttonStyle(.bordered)
-        }
+    private func formatBytes(_ bytes: String?) -> String? {
+        guard let bytes, let byteCount = Int64(bytes) else { return bytes }
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: byteCount)
+    }
+
+    private func formatDate(_ dateString: String?) -> String? {
+        guard let dateString else { return nil }
+        let isoFormatter = ISO8601DateFormatter()
+        guard let date = isoFormatter.date(from: dateString) else { return dateString }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
     }
 
     private func refreshAppDetails() async {

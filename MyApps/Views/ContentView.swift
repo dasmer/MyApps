@@ -13,68 +13,51 @@ struct ContentView: View {
         NavigationStack {
             Group {
                 if isLoading && apps.isEmpty {
-                    VStack(spacing: 12) {
-                        ProgressView("Fetching Apps…")
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.2)
+                        Text("Fetching Apps…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.top, 40)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let errorMessage, apps.isEmpty {
-                    VStack(spacing: 12) {
-                        Text(errorMessage).foregroundStyle(.red)
-                        Button("Retry") { Task { await fetchApps() } }
-                            .buttonStyle(.borderedProminent)
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 50))
+                            .foregroundStyle(.red.gradient)
+                        Text(errorMessage)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button {
+                            Task { await fetchApps() }
+                        } label: {
+                            Label("Retry", systemImage: "arrow.clockwise")
+                                .fontWeight(.semibold)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
                     }
-                    .padding(.top, 40)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     List(apps) { app in
                         NavigationLink {
                             AppDetailView(initialApp: app, countryCode: countryCode)
                         } label: {
-                            HStack(spacing: 12) {
-                                AsyncImage(url: URL(string: app.artworkUrl100 ?? app.artworkUrl60 ?? app.artworkUrl512 ?? "")) { phase in
-                                    switch phase {
-                                    case .empty: ProgressView().frame(width: 60, height: 60)
-                                    case .success(let image): image.resizable().clipShape(RoundedRectangle(cornerRadius: 12)).frame(width: 60, height: 60)
-                                    case .failure: Color.gray.opacity(0.2).clipShape(RoundedRectangle(cornerRadius: 12)).frame(width: 60, height: 60)
-                                    @unknown default: EmptyView().frame(width: 60, height: 60)
-                                    }
-                                }
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(app.trackName ?? "Unknown App").font(.headline).lineLimit(1)
-                                    Text(app.sellerName ?? app.artistName ?? "—")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                    HStack(spacing: 8) {
-                                        if let rating = app.averageUserRating {
-                                            RatingView(rating: rating)
-                                            Text(String(format: "%.2f", rating))
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        if let count = app.userRatingCount {
-                                            Text("(\(count))")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        if let price = app.formattedPrice {
-                                            Text(price)
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                }
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
+                            AppRowView(app: app)
                         }
+                        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     }
-                    .listStyle(.insetGrouped)
+                    .listStyle(.plain)
                     .refreshable {
                         await fetchApps()
                     }
                 }
             }
             .navigationTitle("My Apps")
+            .navigationBarTitleDisplayMode(.large)
             .task {
                 if apps.isEmpty { await fetchApps() }
             }
