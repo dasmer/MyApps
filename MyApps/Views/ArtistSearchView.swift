@@ -41,12 +41,14 @@ struct ArtistSearchView: View {
                             dismiss()
                         } label: {
                             HStack(spacing: 12) {
-                                Image(systemName: "building.2.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.blue.gradient)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.blue.opacity(0.1))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                ZStack {
+                                    Circle()
+                                        .fill(colorForName(artist.artistName).gradient)
+                                    Text(initialsForName(artist.artistName))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(width: 40, height: 40)
 
                                 Text(artist.artistName)
                                     .font(.body)
@@ -146,6 +148,32 @@ struct ArtistSearchView: View {
             errorMessage = "Search failed: \(error.localizedDescription)"
             artists = []
         }
+    }
+
+    private func initialsForName(_ name: String) -> String {
+        let words = name.components(separatedBy: .whitespaces)
+            .filter { !$0.isEmpty }
+
+        if words.count >= 2 {
+            // Take first letter of first two words
+            let first = words[0].prefix(1).uppercased()
+            let second = words[1].prefix(1).uppercased()
+            return first + second
+        } else if let first = words.first {
+            // Take first letter only
+            return String(first.prefix(1).uppercased())
+        }
+        return "?"
+    }
+
+    private func colorForName(_ name: String) -> Color {
+        // Generate consistent color based on name hash
+        let hash = abs(name.hashValue)
+        let colors: [Color] = [
+            .blue, .purple, .pink, .red, .orange,
+            .yellow, .green, .teal, .cyan, .indigo
+        ]
+        return colors[hash % colors.count]
     }
 
     private func relevanceScore(name: String, query: String) -> Int {
