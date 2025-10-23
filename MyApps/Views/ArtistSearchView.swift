@@ -44,11 +44,6 @@ struct ArtistSearchView: View {
                                 Text(artist.artistName)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                if let genre = artist.primaryGenreName {
-                                    Text(genre)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
                             }
                             .padding(.vertical, 4)
                         }
@@ -117,8 +112,7 @@ struct ArtistSearchView: View {
                     uniqueArtists[artistId] = Artist(
                         artistId: artistId,
                         artistName: artistName,
-                        artistLinkUrl: app.artistViewUrl,
-                        primaryGenreName: app.primaryGenreName
+                        artistLinkUrl: app.artistViewUrl
                     )
                 }
             }

@@ -4,8 +4,7 @@ struct Artist: Codable, Identifiable {
     let artistId: Int
     let artistName: String
     let artistLinkUrl: String?
-    let primaryGenreName: String?
-
+ 
     var id: Int { artistId }
 }
 
