@@ -247,7 +247,8 @@ struct AppDetailView: View {
         do {
             let urlStr = "https://itunes.apple.com/lookup?id=\(trackId)&country=\(countryCode)"
             guard let url = URL(string: urlStr) else { throw URLError(.badURL) }
-            let (data, response) = try await URLSession.shared.data(from: url)
+            var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
                 throw URLError(.badServerResponse)
             }
