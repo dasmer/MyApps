@@ -9,6 +9,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var apps: [AppItem] = []
     @State private var showingArtistSearch = false
+    @State private var hasLoadedSavedArtist = false
 
     var body: some View {
         NavigationStack {
@@ -79,7 +80,10 @@ struct ContentView: View {
                     await fetchApps()
                 }
             }
-            .fullScreenCover(isPresented: .constant(artistId == nil && !showingArtistSearch)) {
+            .fullScreenCover(isPresented: Binding(
+                get: { hasLoadedSavedArtist && artistId == nil && !showingArtistSearch },
+                set: { _ in }
+            )) {
                 ArtistSearchView(showCancelButton: false) { artist in
                     selectArtist(artist)
                 }
@@ -120,6 +124,7 @@ struct ContentView: View {
     private func loadSavedArtist() {
         artistId = AppSettings.selectedArtistId
         artistName = AppSettings.selectedArtistName
+        hasLoadedSavedArtist = true
     }
 
     private func selectArtist(_ artist: Artist) {

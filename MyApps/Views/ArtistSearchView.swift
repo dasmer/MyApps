@@ -40,16 +40,30 @@ struct ArtistSearchView: View {
                             onArtistSelected(artist)
                             dismiss()
                         } label: {
-                            VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "building.2.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.blue.gradient)
+                                    .frame(width: 40, height: 40)
+                                    .background(Color.blue.opacity(0.1))
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+
                                 Text(artist.artistName)
-                                    .font(.headline)
+                                    .font(.body)
                                     .foregroundStyle(.primary)
+                                    .multilineTextAlignment(.leading)
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, 8)
                         }
                         .buttonStyle(.plain)
                     }
-                    .listStyle(.plain)
+                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Find Developer")
@@ -117,11 +131,59 @@ struct ArtistSearchView: View {
                 }
             }
 
-            artists = Array(uniqueArtists.values).sorted { $0.artistName < $1.artistName }
+            artists = Array(uniqueArtists.values).sorted { artist1, artist2 in
+                let score1 = relevanceScore(name: artist1.artistName, query: query)
+                let score2 = relevanceScore(name: artist2.artistName, query: query)
+
+                if score1 != score2 {
+                    return score1 > score2
+                }
+                // Tie-breaker: alphabetical
+                return artist1.artistName < artist2.artistName
+            }
 
         } catch {
             errorMessage = "Search failed: \(error.localizedDescription)"
             artists = []
         }
+    }
+
+    private func relevanceScore(name: String, query: String) -> Int {
+        let nameLower = name.lowercased()
+        let queryLower = query.lowercased()
+
+        // Exact match (highest priority)
+        if nameLower == queryLower {
+            return 1000
+        }
+
+        // Starts with query
+        if nameLower.hasPrefix(queryLower) {
+            // Bonus for closer length match
+            let lengthDiff = abs(name.count - query.count)
+            return 500 - lengthDiff
+        }
+
+        // Word boundary match - query matches start of any word
+        let words = name.components(separatedBy: .whitespaces)
+        for word in words {
+            if word.lowercased().hasPrefix(queryLower) {
+                let lengthDiff = abs(word.count - query.count)
+                return 300 - lengthDiff
+            }
+        }
+
+        // Contains query
+        if nameLower.contains(queryLower) {
+            // Bonus for earlier position in string
+            if let range = nameLower.range(of: queryLower) {
+                let position = nameLower.distance(from: nameLower.startIndex, to: range.lowerBound)
+                return 100 - position
+            }
+            return 100
+        }
+
+        // No match
+        return 0
     }
 }
