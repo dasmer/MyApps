@@ -4,7 +4,7 @@ import SwiftUI
 struct ArtistAppsApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            DeveloperAppsView()
         }
     }
 }

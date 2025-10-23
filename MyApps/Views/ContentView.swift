@@ -1,15 +1,21 @@
 import SwiftUI
 
-struct ContentView: View {
+struct DeveloperAppsView: View {
     private let countryCode = "us"
 
     @State private var artistId: Int?
     @State private var artistName: String?
+    @State private var artistLinkUrl: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var apps: [AppItem] = []
     @State private var showingArtistSearch = false
     @State private var hasLoadedSavedArtist = false
+
+    private var currentArtist: Artist? {
+        guard let artistId, let artistName else { return nil }
+        return Artist(artistId: artistId, artistName: artistName, artistLinkUrl: artistLinkUrl)
+    }
 
     var body: some View {
         NavigationStack {
@@ -61,11 +67,38 @@ struct ContentView: View {
             .navigationTitle(artistName ?? "My Apps")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if let artist = currentArtist {
+                        if let linkUrl = artist.artistLinkUrl,
+                           let url = URL(string: linkUrl) {
+                            Link(destination: url) {
+                                ZStack {
+                                    Circle()
+                                        .fill(artist.avatarColor.gradient)
+                                    Text(artist.initials)
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
+                                .frame(width: 32, height: 32)
+                            }
+                        } else {
+                            ZStack {
+                                Circle()
+                                    .fill(artist.avatarColor.gradient)
+                                Text(artist.initials)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(.white)
+                            }
+                            .frame(width: 32, height: 32)
+                        }
+                    }
+                }
+
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingArtistSearch = true
                     } label: {
-                        Label("Change Developer", systemImage: "person.crop.circle.badge.magnifyingglass")
+                        Label("Change Developer", systemImage: "magnifyingglass.circle")
                     }
                 }
             }
@@ -124,6 +157,7 @@ struct ContentView: View {
     private func loadSavedArtist() {
         artistId = AppSettings.selectedArtistId
         artistName = AppSettings.selectedArtistName
+        artistLinkUrl = AppSettings.selectedArtistLinkUrl
         hasLoadedSavedArtist = true
     }
 
@@ -131,6 +165,7 @@ struct ContentView: View {
         AppSettings.saveArtist(artist)
         artistId = artist.artistId
         artistName = artist.artistName
+        artistLinkUrl = artist.artistLinkUrl
         apps = []
         Task {
             await fetchApps()
