@@ -70,9 +70,9 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingArtistSearch) {
-                ArtistSearchView { artist in
+                ArtistSearchView(onArtistSelected: { artist in
                     selectArtist(artist)
-                }
+                })
             }
             .task {
                 loadSavedArtist()
@@ -84,9 +84,9 @@ struct ContentView: View {
                 get: { hasLoadedSavedArtist && artistId == nil && !showingArtistSearch },
                 set: { _ in }
             )) {
-                ArtistSearchView(showCancelButton: false) { artist in
+                ArtistSearchView(onArtistSelected: { artist in
                     selectArtist(artist)
-                }
+                }, showCancelButton: false)
                 .interactiveDismissDisabled()
             }
         }
