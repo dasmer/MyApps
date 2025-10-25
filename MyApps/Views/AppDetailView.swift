@@ -59,6 +59,22 @@ struct AppDetailView: View {
         .sheet(isPresented: $showRawJSON) {
             RawJSONView(encodable: app)
         }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if let writeReviewURL {
+                    Menu {
+                        Button {
+                            openURL(writeReviewURL)
+                        } label: {
+                            Label("Write a Review", systemImage: "square.and.pencil")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                    }
+                    .accessibilityLabel("More actions")
+                }
+            }
+        }
     }
 
     private var header: some View {
@@ -115,6 +131,29 @@ struct AppDetailView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
+                }
+                .padding(.bottom, app.trackId != nil ? 4 : 0)
+
+                if let trackId = app.trackId {
+                    NavigationLink {
+                        ReviewsListView(
+                            trackId: trackId,
+                            countryCode: countryCode,
+                            languageCode: preferredLanguageCode
+                        )
+                    } label: {
+                        Label("See Reviews", systemImage: "text.bubble.fill")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                            .foregroundStyle(.primary)
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 if let price = app.formattedPrice {
@@ -259,5 +298,14 @@ struct AppDetailView: View {
         } catch {
             // Silently ignore refresh errors in detail view
         }
+    }
+
+    private var preferredLanguageCode: String? {
+        Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
+    }
+
+    private var writeReviewURL: URL? {
+        guard let trackId = app.trackId else { return nil }
+        return URL(string: "itms-apps://apps.apple.com/app/id\(trackId)?action=write-review")
     }
 }
