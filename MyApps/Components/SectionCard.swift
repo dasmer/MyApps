@@ -15,12 +15,15 @@ struct SectionCard<Content: View>: View {
                 Text(title)
                     .font(.title3)
                     .fontWeight(.bold)
+                    .foregroundStyle(.primary)
             }
             content
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
     }
 }

@@ -1,0 +1,24 @@
+{
+  "feed": {
+    "entry": [
+      {
+        "id": { "label": "R1" },
+        "updated": { "label": "2024-03-01T12:00:00-07:00" },
+        "title": { "label": "Fantastic!" },
+        "content": { "label": "I love using this app every day. It has everything I need and keeps getting better &amp; better." },
+        "im:rating": { "label": "5" },
+        "im:version": { "label": "5.5.2" },
+        "author": { "name": { "label": "HappyUser42" } }
+      },
+      {
+        "id": { "label": "R2" },
+        "updated": { "label": "2024-02-14T09:30:00-07:00" },
+        "title": { "label": "Needs work" },
+        "content": { "label": "The concept is great but there are still a few bugs that need to be ironed out. Hoping for an update soon!" },
+        "im:rating": { "label": "3" },
+        "im:version": { "label": "5.5.2" },
+        "author": { "name": { "label": "ConstructiveCritic" } }
+      }
+    ]
+  }
+}
