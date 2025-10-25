@@ -2,10 +2,6 @@
   "feed": {
     "entry": [
       {
-        "id": { "label": "123456789" },
-        "title": { "label": "Sample App" }
-      },
-      {
         "id": { "label": "R1" },
         "updated": { "label": "2024-03-01T12:00:00-07:00" },
         "title": { "label": "Fantastic!" },

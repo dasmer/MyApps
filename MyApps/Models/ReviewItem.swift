@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 struct ReviewItem: Identifiable, Equatable {
     let reviewId: String
@@ -31,6 +32,7 @@ struct ReviewItem: Identifiable, Equatable {
               let updatedLabel = updatedDictionary["label"] as? String,
               let updatedDate = ReviewItem.parseDate(updatedLabel)
         else {
+            print("error")
             return nil
         }
 

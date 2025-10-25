@@ -14,41 +14,46 @@ struct AppDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 0) {
                 header
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
 
-                if let urlStr = app.trackViewUrl, let url = URL(string: urlStr) {
-                    Button {
-                        openURL(url)
+                if let trackId = app.trackId {
+                    NavigationLink {
+                        ReviewsListView(
+                            trackId: trackId,
+                            countryCode: countryCode,
+                            languageCode: preferredLanguageCode
+                        )
                     } label: {
-                        Label("View in App Store", systemImage: "arrow.up.forward.app.fill")
+                        Label("See Reviews", systemImage: "text.bubble.fill")
                             .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.accentColor.gradient)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Color.accentColor)
+                            )
                     }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
                 }
+                
 
-                whatsNewSection
-                descriptionSection
-                screenshotsSection
-                detailsGrid
-
-                Button {
-                    showRawJSON.toggle()
-                } label: {
-                    Label("View Raw JSON", systemImage: "curlybraces")
-                        .font(.subheadline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(.tertiarySystemGroupedBackground))
-                        .foregroundStyle(.secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                VStack(alignment: .leading, spacing: 24) {
+                    whatsNewSection
+                    descriptionSection
+                    screenshotsSection
+                    detailsGrid
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 24)
+                .padding(.bottom, 16)
             }
-            .padding()
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(app.trackName ?? "Details")
@@ -61,18 +66,24 @@ struct AppDetailView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if let writeReviewURL {
-                    Menu {
+                Menu {
+                    if let urlStr = app.trackViewUrl, let url = URL(string: urlStr) {
                         Button {
-                            openURL(writeReviewURL)
+                            openURL(url)
                         } label: {
-                            Label("Write a Review", systemImage: "square.and.pencil")
+                            Label("View in App Store", systemImage: "arrow.up.forward.app.fill")
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("More actions")
+
+                    Button {
+                        showRawJSON.toggle()
+                    } label: {
+                        Label("View Raw JSON", systemImage: "curlybraces")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
                 }
+                .accessibilityLabel("More actions")
             }
         }
     }
@@ -101,7 +112,7 @@ struct AppDetailView: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(app.trackName ?? "Unknown App")
                     .font(.title2)
                     .fontWeight(.bold)
@@ -112,9 +123,10 @@ struct AppDetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .padding(.bottom, 2)
                 }
 
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     if let rating = app.averageUserRating {
                         HStack(spacing: 4) {
                             RatingView(rating: rating, size: .medium)
@@ -127,46 +139,28 @@ struct AppDetailView: View {
                     if let count = app.userRatingCount, count > 0 {
                         Text("•")
                             .foregroundStyle(.quaternary)
-                        Text("\(count)")
+                        Text("\(count.formatted())")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                }
-                .padding(.bottom, app.trackId != nil ? 4 : 0)
-
-                if let trackId = app.trackId {
-                    NavigationLink {
-                        ReviewsListView(
-                            trackId: trackId,
-                            countryCode: countryCode,
-                            languageCode: preferredLanguageCode
-                        )
-                    } label: {
-                        Label("See Reviews", systemImage: "text.bubble.fill")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
-                            )
-                            .foregroundStyle(.primary)
-                    }
-                    .buttonStyle(.plain)
                 }
 
                 if let price = app.formattedPrice {
                     Text(price)
                         .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(price == "Free" ? .green : .blue)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 6)
                         .background(
-                            Capsule()
-                                .fill(price == "Free" ? Color.green.opacity(0.15) : Color.blue.opacity(0.15))
+                            LinearGradient(
+                                colors: price == "Free" ? [Color.green, Color.green.opacity(0.8)] : [Color.blue, Color.blue.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            in: Capsule()
                         )
+                        .shadow(color: (price == "Free" ? Color.green : Color.blue).opacity(0.3), radius: 4, x: 0, y: 2)
                 }
             }
 
@@ -302,10 +296,5 @@ struct AppDetailView: View {
 
     private var preferredLanguageCode: String? {
         Locale.current.identifier.replacingOccurrences(of: "_", with: "-")
-    }
-
-    private var writeReviewURL: URL? {
-        guard let trackId = app.trackId else { return nil }
-        return URL(string: "itms-apps://apps.apple.com/app/id\(trackId)?action=write-review")
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 @MainActor
 class ReviewsViewModel: ObservableObject {
@@ -133,9 +134,8 @@ class ReviewsViewModel: ObservableObject {
         }
 
         guard !entryItems.isEmpty else { return [] }
-        let reviewEntries = entryItems.dropFirst()
         var results: [ReviewItem] = []
-        for entry in reviewEntries {
+        for entry in entryItems {
             if let item = ReviewItem(entry: entry) {
                 results.append(item)
             }

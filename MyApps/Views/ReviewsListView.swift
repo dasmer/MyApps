@@ -50,17 +50,33 @@ struct ReviewsListView: View {
     }
 
     private var headerPill: some View {
-        HStack {
-            Text("Most recent")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(Color.accentColor.opacity(0.12), in: Capsule())
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.caption2)
+                Text("Most recent")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 7)
+            .background(
+                LinearGradient(
+                    colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: Capsule()
+            )
+            .shadow(color: Color.accentColor.opacity(0.25), radius: 4, x: 0, y: 2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
         .accessibilityElement(children: .combine)
     }
 
@@ -74,8 +90,9 @@ struct ReviewsListView: View {
             .onAppear {
                 viewModel.loadNextPageIfNeeded(currentItem: review)
             }
-            .listRowInsets(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 0))
+            .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
     }
 
@@ -165,44 +182,68 @@ private struct ReviewRowView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             header
+
+            Divider()
+                .background(Color.primary.opacity(0.1))
+
             Text(review.body)
                 .font(.body)
                 .foregroundStyle(.primary)
                 .lineLimit(bodyLineLimit)
+                .fixedSize(horizontal: false, vertical: true)
+
             if shouldShowToggle {
-                Button(isExpanded ? "Show less" : "Read more", action: onToggleExpanded)
+                Button(action: onToggleExpanded) {
+                    HStack(spacing: 4) {
+                        Text(isExpanded ? "Show less" : "Read more")
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.caption2)
+                    }
                     .font(.caption)
                     .fontWeight(.semibold)
+                    .foregroundStyle(Color.accentColor)
+                }
             }
+
+            Divider()
+                .background(Color.primary.opacity(0.1))
+
             meta
         }
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
         .accessibilityElement(children: .combine)
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(review.title)
                 .font(.headline)
+                .fontWeight(.bold)
                 .foregroundStyle(.primary)
-            HStack(alignment: .center, spacing: 6) {
+            HStack(alignment: .center, spacing: 8) {
                 ratingStars
                 Text("\(review.rating)/5")
-                    .font(.caption)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
                     .foregroundStyle(.secondary)
             }
         }
     }
 
     private var ratingStars: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: 3) {
             ForEach(1...5, id: \.self) { index in
                 Image(systemName: index <= review.rating ? "star.fill" : "star")
+                    .font(.body)
                     .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(index <= review.rating ? Color.yellow : Color.secondary)
+                    .foregroundStyle(index <= review.rating ? Color.yellow : Color.secondary.opacity(0.4))
             }
         }
         .accessibilityLabel("Rating \(review.rating) out of 5")
@@ -232,9 +273,9 @@ private struct ReviewRowView: View {
             if let url = Bundle.main.url(forResource: "StubReviews", withExtension: "json"),
                let data = try? Data(contentsOf: url),
                let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let feed = root?["feed"] as? [String: Any],
+               let feed = root["feed"] as? [String: Any],
                let entries = feed["entry"] as? [[String: Any]] {
-                let reviews = entries.dropFirst().compactMap { ReviewItem(entry: $0) }
+                let reviews = entries.compactMap { ReviewItem(entry: $0) }
                 viewModel.applyPreview(reviews: reviews)
             }
             return viewModel
